@@ -1,0 +1,142 @@
+# Helper note: expiry uses ISO dates (YYYY-MM-DD)
+# tiers: bronze | silver | gold | platinum
+- id: chanel
+  credentials:
+    email: partnerships@chanel.example.com
+    password: chanel-demo
+  company:
+    name: Chanel
+    contact_first: Claire
+    contact_last: Martin
+  membership:
+    tier: platinum
+    status: active
+    expiry: 2026-03-05
+    manager: Tim Bodley-Scott
+  redeemed_benefits: [B03, B08]
+
+- id: microsoft
+  credentials:
+    email: engage@microsoft.example.com
+    password: msft-demo
+  company:
+    name: Microsoft
+    contact_first: Arun
+    contact_last: Desai
+  membership:
+    tier: silver
+    status: active
+    expiry: 2026-01-28
+  redeemed_benefits: [B07, B11, B12]
+
+- id: google
+  credentials:
+    email: partnerships@google.example.com
+    password: google-demo
+  company:
+    name: Google
+    contact_first: Mina
+    contact_last: Patel
+  membership:
+    tier: gold
+    status: active
+    expiry: 2025-12-04
+  redeemed_benefits: [B04, B10]
+
+- id: amazon
+  credentials:
+    email: collab@amazon.example.com
+    password: amazon-demo
+  company:
+    name: Amazon
+    contact_first: Ben
+    contact_last: Hughes
+  membership:
+    tier: silver
+    status: active
+    expiry: 2026-02-16
+  redeemed_benefits: [B04]
+
+- id: meta
+  credentials:
+    email: labs@meta.example.com
+    password: meta-demo
+  company:
+    name: Meta
+    contact_first: Priya
+    contact_last: Rao
+  membership:
+    tier: silver
+    status: active
+    expiry: 2026-05-10
+  redeemed_benefits: []
+
+- id: apple
+  credentials:
+    email: talent@apple.example.com
+    password: apple-demo
+  company:
+    name: Apple
+    contact_first: Jamie
+    contact_last: Wong
+  membership:
+    tier: bronze
+    status: active
+    expiry: 2026-04-01
+  redeemed_benefits: [B15]
+
+- id: deepmind
+  credentials:
+    email: ai@deepmind.example.com
+    password: deepmind-demo
+  company:
+    name: Google DeepMind
+    contact_first: Sara
+    contact_last: Klein
+  membership:
+    tier: platinum
+    status: active
+    expiry: 2026-06-20
+  redeemed_benefits: [B11, B13]
+
+- id: chubb
+  credentials:
+    email: innovation@chubb.example.com
+    password: chubb-demo
+  company:
+    name: Chubb
+    contact_first: Tom
+    contact_last: Alvarez
+  membership:
+    tier: bronze
+    status: active
+    expiry: 2025-11-22
+  redeemed_benefits: []
+
+- id: siemens
+  credentials:
+    email: partners@siemens.example.com
+    password: siemens-demo
+  company:
+    name: Siemens
+    contact_first: Elke
+    contact_last: Fischer
+  membership:
+    tier: gold
+    status: active
+    expiry: 2026-03-30
+  redeemed_benefits: [B06, B09]
+
+- id: bbc
+  credentials:
+    email: rdi@bbc.example.com
+    password: bbc-demo
+  company:
+    name: BBC
+    contact_first: Omar
+    contact_last: Haddad
+  membership:
+    tier: silver
+    status: active
+    expiry: 2025-12-14
+  redeemed_benefits: [B04, B14]

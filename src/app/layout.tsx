@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+// src/app/layout.tsx
 import "./globals.css";
-
-import MuiThemeProvider from "@/components/MuiThemeProvider";
+import type { Metadata } from "next";
+import ClientLayout from "@/components/ClientLayout";
 
 export const metadata: Metadata = {
   title: "Alliances Platform",
-  description: "UCL CS Alliances Platform – Development Environment",
+  description: "UCL Computer Science Alliances Platform",
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <MuiThemeProvider>{children}</MuiThemeProvider>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

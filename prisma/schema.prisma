@@ -4,29 +4,236 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-model TestItem {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  name      String
-}
+// CORE IDENTITY & ORGANISATIONS
+// -----------------------------
 
 model User {
-  id            String   @id @default(cuid())
-  name          String?
-  email         String?  @unique
-  emailVerified DateTime?
-  image         String?
-//  accounts      Account[]
-//  sessions      Session[]
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+
+  organisation   Organisation? @relation(fields: [organisationId], references: [id])
+  organisationId Int?
+
+  defaultApp   App? @relation("UserDefaultApp", fields: [defaultAppId], references: [id])
+  defaultAppId Int?
+
+  roles       UserRole[]
+  memberships Membership[]
+
+  // Auth models
+  accounts Account[]
+  sessions Session[]
+
+  // App-specific projections (1–1)
+  membershipDashboardMember MembershipDashboardMember? @relation("UserDashboardMember")
+
+  // Audit log relation (actor)
+  auditLogs AuditLog[] @relation("AuditActor")
 }
 
-/// etc – Account, Session, VerificationToken models (from the NextAuth docs)
+model Organisation {
+  id          Int              @id @default(autoincrement())
+  name        String
+  slug        String           @unique
+  type        OrganisationType
+  users       User[]
+  memberships Membership[]
+}
+
+enum OrganisationType {
+  UNIVERSITY
+  INDUSTRY
+  OTHER
+}
+
+// ROLES & MEMBERSHIPS
+// --------------------
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  key   String @unique // "ADMIN", "PARTNER", "ACADEMIC"
+  label String
+
+  userRoles      UserRole[]
+  appAccessRules AppAccessRule[]
+}
+
+model UserRole {
+  id     Int    @id @default(autoincrement())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId Int
+
+  @@unique([userId, roleId])
+}
+
+model MembershipTier {
+  id    Int    @id @default(autoincrement())
+  key   String @unique // "BRONZE", "SILVER", "GOLD", "PLATINUM"
+  label String
+  rank  Int // 1=Bronze, 2=Silver, 3=Gold, 4=Platinum
+
+  memberships    Membership[]
+  appAccessRules AppAccessRule[]
+}
+
+model Membership {
+  id     Int    @id @default(autoincrement())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  organisationId Int
+
+  membershipTier   MembershipTier @relation(fields: [membershipTierId], references: [id])
+  membershipTierId Int
+
+  isActive Boolean @default(true)
+
+  // Mirrors YAML fields
+  status      String    @default("active")
+  managerName String?
+  expiry      DateTime?
+
+  // 1–1 relation to dashboard projection
+  dashboardEntry MembershipDashboardMember? @relation("MembershipDashboardEntry")
+
+  @@index([userId])
+  @@index([organisationId])
+  @@index([membershipTierId])
+}
+
+// APP REGISTRY & ACCESS RULES
+// ---------------------------
+
+model App {
+  id          Int     @id @default(autoincrement())
+  key         String  @unique // "MEMBERSHIP_DASHBOARD", "IXN", "TALENT_DISCOVERY"
+  name        String
+  basePath    String // e.g. "/apps/membership"
+  isInternal  Boolean @default(true)
+  externalUrl String?
+  description String?
+
+  appAccessRules AppAccessRule[]
+
+  usersDefaultApp User[] @relation("UserDefaultApp")
+}
+
+model AppAccessRule {
+  id    Int @id @default(autoincrement())
+  app   App @relation(fields: [appId], references: [id])
+  appId Int
+
+  role   Role? @relation(fields: [roleId], references: [id])
+  roleId Int?
+
+  minMembershipTier   MembershipTier? @relation(fields: [minMembershipTierId], references: [id])
+  minMembershipTierId Int?
+
+  accessType AppAccessType @default(ALLOW)
+
+  @@index([roleId])
+  @@index([minMembershipTierId])
+}
+
+enum AppAccessType {
+  ALLOW
+  DENY
+}
+
+// MEMBERSHIP DASHBOARD MODULE (NORMALISED VIEW)
+model MembershipDashboardMember {
+  id Int @id @default(autoincrement())
+
+  // Link back to canonical data (optional, but at most one each)
+  user   User?   @relation("UserDashboardMember", fields: [userId], references: [id])
+  userId String? @unique
+
+  membership   Membership? @relation("MembershipDashboardEntry", fields: [membershipId], references: [id])
+  membershipId Int?        @unique
+
+  // YAML id for easy mapping
+  memberKey String @unique // e.g. "chanel", "microsoft"
+
+  // App-specific fields only
+  redeemedBenefitCodes String[] // ["B03", "B08", ...]
+
+  @@index([membershipId])
+}
+
+// AUTH MODELS (NextAuth-style)
+// ----------------------------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// AUDIT LOG
+// ---------
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  entityType String
+  entityId   String
+
+  action String // "CREATE", "UPDATE", "DELETE", "LOGIN", ...
+
+  actor   User?   @relation("AuditActor", fields: [actorId], references: [id])
+  actorId String?
+
+  timestamp DateTime @default(now())
+  data      Json?
+
+  ipAddress String?
+  userAgent String?
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+}
