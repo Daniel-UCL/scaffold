@@ -1,21 +1,27 @@
+// src/components/MuiThemeProvider.tsx
 "use client";
 
 import { ReactNode } from "react";
-import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 
 const theme = createTheme({
-  // Customise later (colours, typography, etc.)
+  // your palette/typography/etc
 });
 
-export default function MuiThemeProvider({
-  children,
-}: {
+type Props = {
   children: ReactNode;
-}) {
+};
+
+export default function MuiThemeProvider({ children }: Props) {
   return (
     <ThemeProvider theme={theme}>
+      {/* Inject global MUI baseline styles */}
       <CssBaseline />
-      {children}
+
+      {/* Your own layout wrapper */}
+      <div className="page-wrapper">
+        {children}
+      </div>
     </ThemeProvider>
   );
 }

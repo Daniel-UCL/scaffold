@@ -3,15 +3,33 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, useSession, getSession } from "next-auth/react";
 
 type SignInFormProps = {
-  redirectToHomeOnSuccess?: boolean;
+  /**
+   * Fallback redirect if no ?callbackUrl=... is present
+   * AND no role-based redirect applies.
+   */
+  defaultRedirect?: string;
 };
 
-export default function SignInForm({
-  redirectToHomeOnSuccess = false,
-}: SignInFormProps) {
+// Role → landing page mapping (in priority order)
+const ROLE_REDIRECTS: Array<{ key: string; path: string }> = [
+  { key: "ADMIN", path: "/membership-dashboard" },
+  { key: "MEMBER", path: "/membership-dashboard" },
+  { key: "ACADEMIC", path: "/ixn-workflow-manager" },
+  { key: "MODULE_LEADER", path: "/ixn-workflow-manager" },
+];
+
+function getRoleBasedRedirect(roleKeys: string[] | undefined | null): string | null {
+  if (!roleKeys || roleKeys.length === 0) return null;
+  for (const { key, path } of ROLE_REDIRECTS) {
+    if (roleKeys.includes(key)) return path;
+  }
+  return null;
+}
+
+export default function SignInForm({ defaultRedirect = "/" }: SignInFormProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,7 +39,7 @@ export default function SignInForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // If already signed in, don’t render the form again.
+  // If already signed in, show a simple status instead of the form
   if (status === "authenticated" && session?.user) {
     return (
       <section
@@ -41,13 +59,14 @@ export default function SignInForm({
     setSubmitting(true);
     setError(null);
 
-    const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+    const requestedCallbackUrl = searchParams.get("callbackUrl") ?? null;
 
+    // First, perform credential sign-in (no automatic redirect)
     const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
-      callbackUrl,
+      callbackUrl: requestedCallbackUrl ?? defaultRedirect ?? "/",
     });
 
     setSubmitting(false);
@@ -62,11 +81,22 @@ export default function SignInForm({
       return;
     }
 
-    if (redirectToHomeOnSuccess) {
-      router.push("/");
-    } else {
-      router.push(callbackUrl);
+    // Success: decide where to send the user
+    if (requestedCallbackUrl) {
+      // If we came here because a protected page sent us, honour that
+      router.push(requestedCallbackUrl);
+      return;
     }
+
+    // Otherwise: use role-based landing, falling back to defaultRedirect
+    const freshSession = await getSession();
+    const roleKeys =
+      (freshSession?.user as any)?.roleKeys as string[] | undefined;
+
+    const roleTarget = getRoleBasedRedirect(roleKeys);
+    const finalUrl = roleTarget ?? defaultRedirect ?? "/";
+
+    router.push(finalUrl);
   }
 
   return (

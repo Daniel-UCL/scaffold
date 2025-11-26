@@ -1,3 +1,4 @@
+// src/app/sign-in/page.tsx
 import SignInForm from "@/components/SignInForm";
 
 export default function GeneralSignInPage() {
@@ -6,12 +7,12 @@ export default function GeneralSignInPage() {
       <header className="content-header">
         <h1>Sign in to the Alliances Platform</h1>
         <p>
-          Use your Alliances test credentials to sign in. This authenticates
-          against the Prisma-backed user accounts in the database.
+          Use your Alliances account to access membership tools, IXN and Talent
+          Discovery, depending on your membership tier.
         </p>
       </header>
 
-      <SignInForm redirectToHomeOnSuccess />
+      <SignInForm defaultRedirect="/membership-dashboard" />
     </section>
   );
 }
