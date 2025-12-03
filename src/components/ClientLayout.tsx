@@ -1,21 +1,27 @@
+// src/components/ClientLayout.tsx
 "use client";
 
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import MuiThemeProvider from "@/components/MuiThemeProvider";
-import MainNav from "@/components/MainNav";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <MuiThemeProvider>
-        <div className="page-wrapper">
-          <MainNav />
-          <main className="site-main">{children}</main>
-          <footer className="site-footer">
-            <p>&copy; {new Date().getFullYear()} UCL Computer Science Alliances</p>
-          </footer>
-        </div>
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
+
+        <Header />
+
+        <main id="main" className="site-main" role="main">
+          {children}
+        </main>
+
+        <Footer />
       </MuiThemeProvider>
     </SessionProvider>
   );

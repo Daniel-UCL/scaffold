@@ -1,3 +1,4 @@
+/* src/app/globals.css */
 @import "tailwindcss";
 
 :root {
@@ -23,4 +24,286 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* --- Alliances global styling (ported from Jekyll) --- */
+
+:root {
+  --ucl-black: #000000;
+  --ucl-ink: #111111;
+  --ucl-blue: #005bbb;
+  --ucl-azure: #e9f2ff;
+  --ucl-sky: #f3f8ff;
+  --ucl-ink-2: #222;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --card: #ffffff;
+  --bg: #ffffff;
+  --link: var(--ucl-blue);
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-0: 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-1: 0 4px 14px rgba(0, 0, 0, 0.06);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --focus: var(--ucl-blue);
+}
+
+/* Base */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--ucl-ink-2);
+  background: var(--bg);
+}
+
+a {
+  color: var(--link);
+}
+
+a:hover,
+a:focus {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+}
+.skip-link:focus {
+  left: 0;
+  top: 0;
+  background: #fff;
+  color: #000;
+  padding: 0.5rem 1rem;
+  z-index: 10000;
+}
+
+/* Banner */
+.banner {
+  border-bottom: 1px solid var(--line);
+}
+
+.banner-top {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+}
+
+.team-name {
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.announce-wrap {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Announcement */
+.lcd-announcement {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  overflow: visible;
+  min-height: auto;
+}
+
+.lcd-text {
+  max-width: 65ch;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  margin: 0;
+}
+
+.lcd-cta {
+  align-self: center;
+  display: inline-flex;
+  width: auto;
+}
+
+/* Nav */
+.banner-nav {
+  border-top: 1px solid var(--line);
+  background: #f7f9fb;
+}
+
+.nav-bar {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.nav-root {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link,
+.menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.menu-button:focus,
+.nav-link:focus {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+/* Layout */
+.site-main {
+  max-width: 1100px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+
+.site-footer {
+  border-top: 1px solid var(--line);
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-copy {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.footer-links {
+  list-style: none;      /* remove bullets */
+  margin: 0;
+  padding: 0;
+  display: flex;         /* horizontal layout */
+  gap: 1rem;             /* space between links */
+}
+
+.footer-links a {
+  text-decoration: none;
+}
+
+.footer-links a:hover,
+.footer-links a:focus {
+  text-decoration: underline;
+}
+
+/* Buttons (for announcement CTA) */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ucl-blue);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--ucl-blue);
+  background: transparent;
+}
+.btn:hover,
+.btn:focus {
+  background: var(--ucl-blue);
+  color: #fff;
+  text-decoration: none;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.btn--primary {
+  background: var(--ucl-blue);
+  color: #fff;
+  border-color: var(--ucl-blue);
+}
+.btn--primary:hover,
+.btn--primary:focus {
+  filter: brightness(0.96);
+}
+
+/* Small responsive tweak: hide ALLIANCES wordmark on narrow screens */
+@media (max-width: 900px) {
+  .banner-top {
+    grid-template-columns: auto 1fr;
+  }
+  .team-name {
+    display: none;
+  }
+}
+
+/* Make buttons styled as nav links look consistent */
+.nav-link--button {
+  background: transparent;
+  border: 0;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+}
+
+/* Optional active underline */
+.nav-link--active {
+  border-bottom: 2px solid var(--ucl-blue);
+}
+
+/* Disabled-style nav items (used for “You are signed in as …”) */
+.nav-link.disabled {
+  color: #888;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.release-notes-home,
+.release {
+  max-width: 1100px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+
+.releases {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.releases li + li {
+  margin-top: 0.5rem;
 }
