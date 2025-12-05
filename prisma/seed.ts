@@ -159,25 +159,25 @@ async function seedAppAccessRules(apps: any, tiers: Map<string, number>) {
   });
   console.log('  - MEMBERSHIP_DASHBOARD: ALLOW Bronze+');
 
-  // IXN: Silver+
+  // IXN: Bronze+
   await prisma.appAccessRule.create({
     data: {
       appId: apps.ixn.id,
+      minMembershipTierId: bronzeId,
+      accessType: 'ALLOW',
+    },
+  });
+  console.log('  - IXN_WORKFLOW_MANAGER: ALLOW Bronze+');
+
+  // Talent Discovery: Silver+
+  await prisma.appAccessRule.create({
+    data: {
+      appId: apps.talent.id,
       minMembershipTierId: silverId,
       accessType: 'ALLOW',
     },
   });
-  console.log('  - IXN_WORKFLOW_MANAGER: ALLOW Silver+');
-
-  // Talent Discovery: Gold+
-  await prisma.appAccessRule.create({
-    data: {
-      appId: apps.talent.id,
-      minMembershipTierId: goldId,
-      accessType: 'ALLOW',
-    },
-  });
-  console.log('  - TALENT_DISCOVERY: ALLOW Gold+');
+  console.log('  - TALENT_DISCOVERY: ALLOW Silver+');
 }
 
 //

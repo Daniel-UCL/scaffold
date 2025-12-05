@@ -1,7 +1,7 @@
 // src/components/Header.tsx
 "use client";
 
-import React from "react"
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -25,8 +25,7 @@ export default function Header() {
   const researchersServices = getServicesForAudience("researchers");
   const partnersServices = getServicesForAudience("partners");
 
-  // Simple local state: open/closed flags per dropdown
-  const [open, setOpen] = React.useState<MenuState>({
+  const [open, setOpen] = useState<MenuState>({
     students: false,
     researchers: false,
     partners: false,
@@ -52,6 +51,18 @@ export default function Header() {
     });
   }
 
+  // Close any open menu when Escape is pressed (keyboard accessibility)
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" || event.key === "Esc") {
+        closeAllMenus();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <header className="banner" role="banner">
       <div className="banner-top">
@@ -60,7 +71,7 @@ export default function Header() {
           href="https://www.ucl.ac.uk/engineering/computer-science"
         >
           <img
-            src="/assets/images/UCL-Computer-Science-logo.jpg"
+            src="/images/UCL-Computer-Science-logo.jpg"
             alt="UCL Computer Science"
           />
         </a>
@@ -122,6 +133,22 @@ export default function Header() {
               >
                 {studentsServices.map((svc) => {
                   const label = svc.navLabel ?? svc.title;
+
+                  if (!svc.navActive) {
+                    return (
+                      <li key={svc.slug} role="none">
+                        <span
+                          role="menuitem"
+                          className="nav-link disabled"
+                          aria-disabled="true"
+                          tabIndex={-1}
+                        >
+                          {label}
+                        </span>
+                      </li>
+                    );
+                  }
+
                   return (
                     <li key={svc.slug} role="none">
                       <Link
@@ -158,6 +185,22 @@ export default function Header() {
               >
                 {researchersServices.map((svc) => {
                   const label = svc.navLabel ?? svc.title;
+
+                  if (!svc.navActive) {
+                    return (
+                      <li key={svc.slug} role="none">
+                        <span
+                          role="menuitem"
+                          className="nav-link disabled"
+                          aria-disabled="true"
+                          tabIndex={-1}
+                        >
+                          {label}
+                        </span>
+                      </li>
+                    );
+                  }
+
                   return (
                     <li key={svc.slug} role="none">
                       <Link
@@ -194,6 +237,22 @@ export default function Header() {
               >
                 {partnersServices.map((svc) => {
                   const label = svc.navLabel ?? svc.title;
+
+                  if (!svc.navActive) {
+                    return (
+                      <li key={svc.slug} role="none">
+                        <span
+                          role="menuitem"
+                          className="nav-link disabled"
+                          aria-disabled="true"
+                          tabIndex={-1}
+                        >
+                          {label}
+                        </span>
+                      </li>
+                    );
+                  }
+
                   return (
                     <li key={svc.slug} role="none">
                       <Link
@@ -230,7 +289,11 @@ export default function Header() {
                   hidden={!open.account}
                 >
                   <li role="none">
-                    <span className="nav-link" role="menuitem" aria-disabled="true">
+                    <span
+                      className="nav-link"
+                      role="menuitem"
+                      aria-disabled="true"
+                    >
                       You are signed in as{" "}
                       {user?.name ?? user?.email ?? "Alliances user"}
                     </span>
@@ -266,9 +329,7 @@ export default function Header() {
                 className="nav-link"
                 href="/contact"
                 role="menuitem"
-                aria-current={
-                  pathname === "/contact" ? "page" : undefined
-                }
+                aria-current={pathname === "/contact" ? "page" : undefined}
               >
                 Contact us
               </Link>

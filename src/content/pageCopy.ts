@@ -40,7 +40,7 @@ export const pageCopy: Record<PageKey, PageCopy> = {
     key: "talentDiscovery",
     title: "Talent Discovery",
     description:
-      "Talent Discovery connects industry partners with UCL Computer Science students and graduates through work opportunities and a searchable CV library.",
+      "General information: Talent Discovery connects industry partners with UCL Computer Science students and graduates through work opportunities and a searchable CV library.",
     unauthenticatedIntro:
       "Sign in with your Alliances account to access Talent Discovery. Students can browse opportunities; Bronze and Silver members can post roles; Gold and Platinum members can access the full Talent Discovery suite, including the CV Library.",
   },

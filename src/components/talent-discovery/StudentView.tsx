@@ -1,25 +1,27 @@
 // src/components/talent-discovery/StudentView.tsx
-import type { PageCopy } from "@/content/pageCopy";
-
-type Props = {
-  copy: PageCopy;
+type TalentDiscoveryViewProps = {
+  title: string;
+  description: string;
 };
 
-export default function StudentView({ copy }: Props) {
+export default function TalentDiscoveryStudentView({
+  title,
+  description,
+}: TalentDiscoveryViewProps) {
   return (
     <section className="content-section">
       <header className="content-header">
-        <h1>{copy.title} – Student view</h1>
-        <p>
-          Browse internships, short-term roles, and graduate opportunities
-          curated for UCL Computer Science students.
-        </p>
+        <h1>{title}</h1>
+        <p>{description}</p>
       </header>
 
       <p>
-        This is where the student-facing Talent Discovery interface will appear,
-        including the job board tailored to your skills and interests.
+        This is the student-facing view of Talent Discovery. Here you will be
+        able to browse job opportunities, internships, and early-career roles
+        curated for UCL Computer Science students.
       </p>
+
+      {/* Add student-specific UI here */}
     </section>
   );
 }

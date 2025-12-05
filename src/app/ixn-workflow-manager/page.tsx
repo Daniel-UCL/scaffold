@@ -27,9 +27,12 @@ export default async function IxnWorkflowManagerPage() {
   const userId = (session.user as any).id as string;
   const canAccess = await userCanAccessApp(userId, "IXN_WORKFLOW_MANAGER");
 
-  if (!canAccess) {
-    redirect("/access-denied");
+if (!canAccess) {
+    redirect(
+      "/access-denied?reason=access-denied&appKey=IXN_WORKFLOW_MANAGER",
+    );
   }
+
 
   return (
     <section className="content-section">

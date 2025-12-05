@@ -5,18 +5,43 @@ import { userCanAccessApp } from "@/lib/access-control";
 import SignInForm from "@/components/SignInForm";
 import { pageCopy } from "@/content/pageCopy";
 
-import StudentView from "@/components/talent-discovery/StudentView";
-import MemberJobBoardOnlyView from "@/components/talent-discovery/MemberJobBoardOnlyView";
-import MemberFullView from "@/components/talent-discovery/MemberFullView";
+// These are the three view components we created earlier
+import TalentDiscoveryStudentView from "@/components/talent-discovery/StudentView";
+import TalentDiscoveryPartnerJobBoardView from "@/components/talent-discovery/PartnerJobBoardView";
+import TalentDiscoveryPartnerFullView from "@/components/talent-discovery/PartnerFullView";
 
-const TALENT_DISCOVERY_APP_KEY = "TALENT_DISCOVERY";
+export const dynamic = "force-dynamic";
 
-export default async function TalentDiscoveryPage() {
+type SearchParamsObject = {
+  [key: string]: string | string[] | undefined;
+};
+
+type TalentDiscoveryPageProps = {
+  searchParams: Promise<SearchParamsObject>;
+};
+
+function getFirst(
+  value: string | string[] | undefined,
+): string | undefined {
+  if (!value) return undefined;
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function TalentDiscoveryPage(
+  { searchParams }: TalentDiscoveryPageProps,
+) {
+  const sp = await searchParams;
+  const view = getFirst(sp.view) ?? "default"; // "student" | "job-board" | "cv-library" | "default"
+
   const copy = pageCopy.talentDiscovery;
   const session = await getServerAuthSession();
 
-  // 1) Not signed in → intro + sign-in form
+  // 1) Not signed in → public description + sign-in form
   if (!session || !session.user) {
+    // Preserve the intended view after sign-in if present
+    const redirectSuffix = view !== "default" ? `?view=${view}` : "";
+    const defaultRedirect = `/talent-discovery${redirectSuffix}`;
+
     return (
       <section className="content-section">
         <header className="content-header">
@@ -26,72 +51,114 @@ export default async function TalentDiscoveryPage() {
 
         {copy.unauthenticatedIntro && <p>{copy.unauthenticatedIntro}</p>}
 
-        <SignInForm defaultRedirect="/talent-discovery" />
+        <SignInForm defaultRedirect={defaultRedirect} />
       </section>
     );
   }
 
+  // 2) Extract user info from the session
   const user = session.user as any;
-  const userId = user.id as string | undefined;
-  const roleKeys = ((user.roleKeys ?? []) as string[]) || [];
-  const membershipTierKey = (user.membershipTierKey ?? null) as
-    | string
-    | null;
+  const userId = user.id as string;
+  const roleKeys = (user.roleKeys ?? []) as string[];
+  const membershipTierRank = (user.membershipTierRank ?? null) as number | null;
 
-  if (!userId) {
+  const hasStudentRole = roleKeys.includes("STUDENT");
+  const hasAdminRole = roleKeys.includes("ADMIN");
+  const hasMemberRole = roleKeys.includes("MEMBER");
+
+  const SILVER_RANK = 2;
+  const GOLD_RANK = 3;
+
+  // ─────────────────────────────────────────
+  // 3) Student view: only STUDENT or ADMIN
+  // ─────────────────────────────────────────
+  if (view === "student") {
+    if (!hasStudentRole && !hasAdminRole) {
+      // Logged-in but wrong role for student view
+      redirect(
+        "/access-denied?reason=student-view-role&appKey=TALENT_DISCOVERY",
+      );
+    }
+
+    // Students/admins can access student view regardless of tier
     return (
-      <section className="content-section">
-        <header className="content-header">
-          <h1>{copy.title}</h1>
-        </header>
-        <p>We could not find your user record.</p>
-      </section>
+      <TalentDiscoveryStudentView
+        title={copy.title}
+        description={copy.description}
+      />
     );
   }
 
-  // 2) App-level access (Bronze+), via Prisma rules
-  const canAccess = await userCanAccessApp(userId, TALENT_DISCOVERY_APP_KEY);
-  if (!canAccess) {
-    redirect("/access-denied");
+  // ─────────────────────────────────────────
+  // 4) App-level gate for partner views (Silver+)
+  //    Applies to job-board, cv-library, and default entries
+  // ─────────────────────────────────────────
+  const canAccessApp = await userCanAccessApp(userId, "TALENT_DISCOVERY");
+  if (!canAccessApp) {
+    redirect(
+      "/access-denied?reason=access-denied&appKey=TALENT_DISCOVERY",
+    );
   }
 
-  // 3) Decide which "face" of Talent Discovery to show
-  const isStudent = roleKeys.includes("STUDENT");
-  const isMember = roleKeys.includes("MEMBER");
+  // ─────────────────────────────────────────
+  // 5) CV Library entry: requires Gold+ tier
+  // ─────────────────────────────────────────
+  if (view === "cv-library") {
+    if (
+      membershipTierRank == null ||
+      membershipTierRank < GOLD_RANK ||
+      !hasMemberRole
+    ) {
+      // Member below Gold, or not a member at all
+      redirect(
+        "/access-denied?reason=cv-library-tier&appKey=TALENT_DISCOVERY",
+      );
+    }
 
-  const isGoldOrAbove =
-    membershipTierKey === "GOLD" || membershipTierKey === "PLATINUM";
-  const isBronzeOrSilver =
-    membershipTierKey === "BRONZE" || membershipTierKey === "SILVER";
-
-  // Student role always gets the student-facing view
-  if (isStudent) {
-    return <StudentView copy={copy} />;
+    // Gold/Platinum member → full partner view (job board + CV Library)
+    return (
+      <TalentDiscoveryPartnerFullView
+        title={copy.title}
+        description={copy.description}
+      />
+    );
   }
 
-  // Member views based on tier
-  if (isMember && isGoldOrAbove) {
-    return <MemberFullView copy={copy} />;
+  // ─────────────────────────────────────────
+  // 6) Job board or default entry for partners
+  // ─────────────────────────────────────────
+  if (
+    membershipTierRank != null &&
+    membershipTierRank >= GOLD_RANK &&
+    hasMemberRole
+  ) {
+    // Gold+ from any non-student entry → full view
+    return (
+      <TalentDiscoveryPartnerFullView
+        title={copy.title}
+        description={copy.description}
+      />
+    );
   }
 
-  if (isMember && isBronzeOrSilver) {
-    return <MemberJobBoardOnlyView copy={copy} />;
+  if (
+    membershipTierRank != null &&
+    membershipTierRank >= SILVER_RANK &&
+    hasMemberRole
+  ) {
+    // Silver members → job board only
+    return (
+      <TalentDiscoveryPartnerJobBoardView
+        title={copy.title}
+        description={copy.description}
+      />
+    );
   }
 
-  // Fallback: allowed by app rules but no clear mapping
-  return (
-    <section className="content-section">
-      <header className="content-header">
-        <h1>{copy.title}</h1>
-      </header>
-      <p>
-        Your account has access to Talent Discovery, but we could not determine
-        which view to show based on your role and membership tier.
-      </p>
-      <p>
-        Please contact the Strategic Alliances Team if you think this is an
-        error.
-      </p>
-    </section>
+  // ─────────────────────────────────────────
+  // 7) Fallback – should rarely be reached
+  // ─────────────────────────────────────────
+  redirect(
+    "/access-denied?reason=access-denied&appKey=TALENT_DISCOVERY",
   );
 }

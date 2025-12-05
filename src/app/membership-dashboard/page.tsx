@@ -1,4 +1,5 @@
 // src/app/membership-dashboard/page.tsx
+import { redirect } from "next/navigation";
 import { getServerAuthSession } from "@/lib/getServerAuthSession";
 import {
   getAdminDashboardSummary,
@@ -8,11 +9,13 @@ import AdminDashboard from "@/components/membership-dashboard/AdminDashboard";
 import MemberDashboard from "@/components/membership-dashboard/MemberDashboard";
 import SignInForm from "@/components/SignInForm";
 import { pageCopy } from "@/content/pageCopy";
+import { userCanAccessApp } from "@/lib/access-control";
 
 export default async function MembershipDashboardPage() {
   const copy = pageCopy.membershipDashboard;
   const session = await getServerAuthSession();
 
+  // 1) Not signed in → public description + sign-in form
   if (!session || !session.user) {
     return (
       <section className="content-section">
@@ -32,18 +35,33 @@ export default async function MembershipDashboardPage() {
   const roleKeys = ((session.user as any).roleKeys ?? []) as string[];
   const isAdmin = roleKeys.includes("ADMIN");
 
+  // 2) Enforce app access rules (for non-admin users)
+  if (!isAdmin) {
+    const canAccess = await userCanAccessApp(
+      userId,
+      "MEMBERSHIP_DASHBOARD",
+    );
+
+    if (!canAccess) {
+      redirect(
+        "/access-denied?reason=access-denied&appKey=MEMBERSHIP_DASHBOARD",
+      );
+    }
+  }
+
+  // 3) Admin view
   if (isAdmin) {
     const summary = await getAdminDashboardSummary();
     return (
       <AdminDashboard
         {...summary}
-        // if you decide to pass page-level copy down:
         title={copy.adminTitle ?? copy.title}
         intro={copy.adminIntro}
       />
     );
   }
 
+  // 4) Member view
   const memberData = await getMemberDashboardData(userId);
 
   if (!memberData) {

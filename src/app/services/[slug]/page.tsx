@@ -1,22 +1,23 @@
 // src/app/services/[slug]/page.tsx
+import React from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServiceBySlug, getRelatedServices } from "@/content/services";
+import {
+  services,
+  getServiceBySlug,
+  getRelatedServices,
+} from "@/content/services";
 import { pathways } from "@/content/pathways";
 
-type ServicePageParams = {
-  slug: string;
-};
-
 type ServicePageProps = {
-  // Next.js 16: params is a Promise
-  params: Promise<ServicePageParams>;
+  // In Next.js 16 app router, params is a Promise
+  params: Promise<{ slug: string }>;
 };
 
+// Pre-generate all service slugs so /services/[slug] pages are statically built
 export function generateStaticParams() {
-  // Pre-generate /services/<slug> for all services
-  const { services } = require("@/content/services") as typeof import("@/content/services");
-  return services.map((svc) => ({ slug: svc.slug }));
+  return services.map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata(
@@ -47,11 +48,23 @@ export default async function ServicePage({ params }: ServicePageProps) {
 
   const related = getRelatedServices(service);
 
-  const audienceLabel = service.audience.join(", ");
-
+  // Look up full pathway objects so we can show titles + links
   const servicePathways = pathways.filter((p) =>
-    service.pathways.includes(p.slug),
+    service.pathways?.includes(p.slug),
   );
+
+  // "Coming soon" logic: treat missing actionUrl or "/404/" as placeholder
+  const isComingSoon =
+    !service.actionUrl || service.actionUrl === "/404/";
+
+  const actionHref = isComingSoon
+    ? `/access-denied?reason=coming-soon&service=${encodeURIComponent(
+        service.slug,
+      )}`
+    : service.actionUrl!;
+
+  const isExternal =
+    !isComingSoon && /^https?:\/\//i.test(actionHref);
 
   return (
     <article className="service">
@@ -60,32 +73,39 @@ export default async function ServicePage({ params }: ServicePageProps) {
         {service.description && <p>{service.description}</p>}
       </header>
 
+      {/* Action button:
+          - if real URL: go there (internal or external)
+          - if "coming soon": routes to /access-denied?reason=coming-soon
+       */}
       {service.actionUrl && (
         <p>
-          <a
-            className="btn"
-            href={service.actionUrl}
-            {...(service.actionUrl.startsWith("http")
-              ? { target: "_blank", rel: "noopener noreferrer" }
-              : {})}
-          >
-            {service.actionLabel ?? "Learn more"}
-          </a>
+          {isExternal ? (
+            <a
+              className="btn"
+              href={actionHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {service.actionLabel ?? "Learn more"}
+            </a>
+          ) : (
+            <Link className="btn" href={actionHref}>
+              {service.actionLabel ?? "Learn more"}
+            </Link>
+          )}
         </p>
       )}
 
-      {/* Placeholder for richer body content, if you add it later */}
-      {/* <section>More detailed content can go here.</section> */}
-
+      {/* Related services */}
       {related.length > 0 && (
         <section className="related-services">
           <h2>Related services</h2>
           <ul className="list-plain cluster">
             {related.map((s) => (
               <li key={s.slug}>
-                <a className="pill" href={`/services/${s.slug}`}>
+                <Link className="pill" href={`/services/${s.slug}`}>
                   {s.navLabel ?? s.title}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -96,21 +116,20 @@ export default async function ServicePage({ params }: ServicePageProps) {
 
       <h3>Service information</h3>
 
-      {service.audience.length > 0 && (
+      {service.audience?.length > 0 && (
         <p>
-          <strong>Audience:</strong> {audienceLabel}
+          <strong>Audience:</strong> {service.audience.join(", ")}
         </p>
       )}
 
       {servicePathways.length > 0 && (
         <p>
-          <strong>Pathway:</strong>{" "}
+          <strong>Pathway(s):</strong>{" "}
           {servicePathways.map((p, idx) => (
-            <span key={p.slug}>
-              {/* For now, link to placeholder /pathways/<slug>, which we can flesh out next step */}
-              <a href={`/pathways/${p.slug}`}>{p.title}</a>
-              {idx < servicePathways.length - 1 ? ", " : ""}
-            </span>
+            <React.Fragment key={p.slug}>
+              <Link href={`/pathways/${p.slug}`}>{p.title}</Link>
+              {idx < servicePathways.length - 1 && ", "}
+            </React.Fragment>
           ))}
         </p>
       )}
